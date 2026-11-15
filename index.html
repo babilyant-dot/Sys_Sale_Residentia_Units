@@ -86,7 +86,7 @@ button.x{width:100%;margin-top:10px;cursor:pointer}button.pri{background:var(--s
 <div class="top"><label for="role">الدور:</label>
 <select id="role"><option value="admin">مدير</option><option value="sales">موظف مبيعات</option><option value="view">عرض فقط (الشاشة الكبيرة)</option><option value="partner">شريك</option></select><select id="emp" style="display:none"></select><span id="cn" class="cnb">● وضع تجريبي (بدون حفظ)</span><span id="who" style="font-size:13px;font-weight:700"></span><button id="lo">تسجيل الدخول</button><button class="adm" id="stf" style="display:none">الموظفون</button>
 <input class="adm" id="q" type="number" placeholder="رقم القطعة" style="width:110px"><button class="adm" id="go">بحث</button>
-<button class="adm" id="rq" style="display:none">طلبات البيع</button><button class="adm" id="prc" style="display:none">التسعير الجماعي</button><button class="adm" id="dsh" style="display:none">لوحة المؤشرات</button><button class="adm" id="lbb" style="display:none">الترتيب</button><button class="adm" id="qrb" style="display:none">رمز QR</button><button class="adm" id="imp">رفع Excel</button><button class="adm" id="rep">التقرير المالي</button><button class="adm" id="lgb">سجل التغييرات</button><button class="adm" id="fit">عرض الكل</button><select id="afl" title="تصفية حسب المساحة"></select><select id="pfl" style="display:none" title="تصفية حسب الشريك"></select><button id="mys" style="display:none">وحداتي</button><button class="adm" id="ptn" style="display:none">الشركاء</button><button class="adm" id="ptv" style="display:none"></button><button id="heat">عرض الإنجاز</button><button id="shb">معرض المشروع</button><button class="vw" id="fs">شاشة كاملة</button></div>
+<button class="adm" id="rq" style="display:none">طلبات البيع</button><button class="adm" id="prc" style="display:none">التسعير الجماعي</button><button class="adm" id="dsh" style="display:none">لوحة المؤشرات</button><button class="adm" id="lbb" style="display:none">الترتيب</button><button class="adm" id="qrb" style="display:none">رمز QR</button><button class="adm" id="imp">رفع Excel</button><button class="adm" id="rep">التقرير المالي</button><button class="adm" id="lgb">سجل التغييرات</button><button class="adm" id="fit">عرض الكل</button><select id="afl" title="تصفية حسب المساحة"></select><select id="pfl" style="display:none" title="تصفية حسب الشريك"></select><button id="mys" style="display:none">وحداتي</button><button class="adm" id="bkp" style="display:none">نسخة احتياطية</button><button class="adm" id="aud" style="display:none">حسابات المديرين</button><button class="adm" id="ptn" style="display:none">الشركاء</button><button class="adm" id="ptv" style="display:none"></button><button id="heat">عرض الإنجاز</button><button id="shb">معرض المشروع</button><button class="vw" id="fs">شاشة كاملة</button></div>
 <div class="bar" id="bar"></div><div id="seedb" style="display:none;padding:8px 12px;border:1px solid var(--build);border-radius:10px;background:rgba(220,38,38,.08);margin-bottom:8px;cursor:pointer;font-size:13px"></div><div id="pleg"></div><div id="ptleg" style="display:none;margin-bottom:8px;font-size:12px"></div><div id="hleg" style="display:none;margin-bottom:8px;font-size:12px;color:var(--mut)">نسبة الإنجاز: 0% <span style="display:inline-block;width:160px;height:10px;border-radius:5px;vertical-align:middle;background:linear-gradient(90deg,hsl(0,85%,42%),hsl(60,85%,42%),hsl(120,85%,42%))"></span> 100%</div>
 <div id="mapw"><svg id="map"><g id="rg"><path id="bg"/><g id="pl"></g></g></svg><div id="mc"><div class="mcb"><button id="zi"></button><button id="zo"></button><button id="rl"></button><button id="rr"></button><button id="rz"></button></div><div class="mcs"><input id="rs" type="range" min="0" max="360" value="0" aria-label="تدوير المخطط"><b id="rv">0°</b></div></div></div>
 <div id="toast"></div>
@@ -2555,7 +2555,7 @@ function updRole(e){
  em.innerHTML=staff.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');
  if(!staff.some(s=>s.name===cur))cur=staff.length?staff[0].name:'';
  em.value=cur;em.style.display=role==='sales'?'':'none';
- ['stf','lgb','imp','rep','rq','dsh','prc','ptn'].forEach(i=>$(i).style.display=role==='admin'?'':'none');{const sf=role==='admin'||role==='sales';$('ptv').style.display=sf?'':'none';$('pfl').style.display=sf?'':'none';if(!sf){pview=false;pfl='all'}ptvBtn()}$('lbb').style.display=role==='sales'&&showLB?'':'none';$('qrb').style.display=role==='admin'||role==='sales'?'':'none';$('mys').style.display=role==='partner'?'':'none';
+ ['stf','lgb','imp','rep','rq','dsh','prc','ptn','bkp'].forEach(i=>$(i).style.display=role==='admin'?'':'none');$('aud').style.display=FB.aud&&role==='admin'?'':'none';{const sf=role==='admin'||role==='sales';$('ptv').style.display=sf?'':'none';$('pfl').style.display=sf?'':'none';if(!sf){pview=false;pfl='all'}ptvBtn()}$('lbb').style.display=role==='sales'&&showLB?'':'none';$('qrb').style.display=role==='admin'||role==='sales'?'':'none';$('mys').style.display=role==='partner'?'':'none';
  ME=role==='admin'?'المدير':role==='sales'?cur:'';
  document.body.classList.toggle('view',role==='view');$('who').textContent=role==='view'?'شاشة العرض':role==='admin'?'المدير':role==='partner'?((FB.profile&&FB.profile.name)||'')+' (شريك)':ME+' (موظف مبيعات)';$('lo').innerHTML=ic(role==='view'?'key':'logout')+(role==='view'?'تسجيل الدخول':'تسجيل الخروج');paint();updBadge();updSeed();fit();arm()}
 async function sha(s){s=String(s);if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('esraa|'+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}let h=5381;for(let k=0;k<3000;k++)for(const c of 'esraa|'+s)h=((h<<5)+h+c.charCodeAt(0))|0;return 'f'+h}
@@ -2729,7 +2729,7 @@ function dashUI(){
 $('heat').onclick=()=>{heat=!heat;if(heat){pview=false;ptvBtn()}$('heat').innerHTML=ic('thermo')+(heat?'عرض الحالات':'عرض الإنجاز');$('hleg').style.display=heat?'block':'none';paint()};
 $('dsh').onclick=dashUI;$('lbb').onclick=lbUI;$('qrb').onclick=()=>qrUI(0);
 const SC={build:'var(--build)',avail:'var(--avail)',sold:'var(--sold)'};
-const IC={plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',rotl:'<path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/>',rotr:'<path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/>',compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',handshake:'<path d="M3 12l5-5 4 3 4-3 5 5"/><path d="M8 7l-5 5 6 6 3-3M16 7l5 5-6 6-3-3"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.2c2.8.2 4.5 2.2 4.5 5"/>',bell:'<path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15z"/><path d="M10 21a2 2 0 0 0 4 0"/>',upload:'<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>',qr:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M14 21h3M21 17v4"/>',trophy:'<path d="M8 4h8v6a4 4 0 0 1-8 0zM8 6H4v1a3 3 0 0 0 4 3M16 6h4v1a3 3 0 0 1-4 3M12 14v4M8 21h8M9 18h6"/>',search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',maximize:'<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',images:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 9"/>',thermo:'<path d="M14 14.8V4a2 2 0 0 0-4 0v10.8a4 4 0 1 0 4 0z"/>',key:'<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>',logout:'<path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/>',building:'<path d="M4 21V5l8-2 8 2v16M9 21v-4h6v4M8 9h2M14 9h2M8 13h2M14 13h2"/>',check:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',tag:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1"/>',hourglass:'<path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/>'};
+const IC={download:'<path d="M12 4v12M7 11l5 5 5-5M4 20h16"/>',plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',rotl:'<path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/>',rotr:'<path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/>',compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',handshake:'<path d="M3 12l5-5 4 3 4-3 5 5"/><path d="M8 7l-5 5 6 6 3-3M16 7l5 5-6 6-3-3"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.2c2.8.2 4.5 2.2 4.5 5"/>',bell:'<path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15z"/><path d="M10 21a2 2 0 0 0 4 0"/>',upload:'<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>',qr:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M14 21h3M21 17v4"/>',trophy:'<path d="M8 4h8v6a4 4 0 0 1-8 0zM8 6H4v1a3 3 0 0 0 4 3M16 6h4v1a3 3 0 0 1-4 3M12 14v4M8 21h8M9 18h6"/>',search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',maximize:'<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',images:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 9"/>',thermo:'<path d="M14 14.8V4a2 2 0 0 0-4 0v10.8a4 4 0 1 0 4 0z"/>',key:'<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>',logout:'<path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/>',building:'<path d="M4 21V5l8-2 8 2v16M9 21v-4h6v4M8 9h2M14 9h2M8 13h2M14 13h2"/>',check:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',tag:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1"/>',hourglass:'<path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/>'};
 const ic=n=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${IC[n]||''}</svg>`;
 function donut(segs,size,center,sub,click){
  const T=segs.reduce((s,x)=>s+x.v,0)||1,r=40,C=2*Math.PI*r;let off=0;
@@ -2741,7 +2741,7 @@ function cols(items,h){const mx=Math.max(1,...items.map(i=>i.v)),w=300/items.len
  return `<svg viewBox="0 0 300 ${h+22}" width="100%">${items.map((i,k)=>{const bh=i.v/mx*h;return `<g><rect class="cb" x="${k*w+w*.18}" y="${h-bh}" width="${w*.64}" height="${bh}" rx="4" style="fill:var(--sold)"><title>${i.l}: ${i.v}</title></rect><text x="${k*w+w/2}" y="${h+14}" text-anchor="middle" style="font-size:9px;fill:var(--mut)">${i.l}</text><text x="${k*w+w/2}" y="${h-bh-3}" text-anchor="middle" style="font-size:9px;fill:var(--tx)">${i.v||''}</text></g>`}).join('')}</svg>`}
 function hbars(items){if(!items.length)return '<div class="note">لا توجد بيانات.</div>';const mx=Math.max(1,...items.map(i=>i.v));
  return items.map(i=>`<div class="hb"><span>${esc(i.l)}</span><div class="hbt"><i style="width:${i.v/mx*100}%;background:${i.c||'var(--sold)'}"></i></div><b>${i.v}</b></div>`).join('')}
-function iconize(){const M={go:['search','بحث'],fit:['maximize','عرض كامل المخطط'],rep:['file','التقرير المالي'],lgb:['clock','سجل التغييرات'],stf:['users','إدارة الموظفين'],imp:['upload','رفع ملف Excel'],dsh:['chart','لوحة المؤشرات'],lbb:['trophy','ترتيب المبيعات'],qrb:['qr','رمز QR للمشروع'],shb:['images','معرض المشروع'],fs:['maximize','شاشة كاملة'],heat:['thermo','تبديل عرض الخريطة'],zi:['plus','تكبير'],zo:['minus','تصغير'],rl:['rotl','تدوير 15° لليسار'],rr:['rotr','تدوير 15° لليمين'],rz:['compass','إعادة الاتجاه وملاءمة الشاشة'],ptn:['handshake','إدارة الشركاء'],prc:['tag','تسعير الوحدات دفعة واحدة']};
+function iconize(){const M={go:['search','بحث'],fit:['maximize','عرض كامل المخطط'],rep:['file','التقرير المالي'],lgb:['clock','سجل التغييرات'],stf:['users','إدارة الموظفين'],imp:['upload','رفع ملف Excel'],dsh:['chart','لوحة المؤشرات'],lbb:['trophy','ترتيب المبيعات'],qrb:['qr','رمز QR للمشروع'],shb:['images','معرض المشروع'],fs:['maximize','شاشة كاملة'],heat:['thermo','تبديل عرض الخريطة'],zi:['plus','تكبير'],zo:['minus','تصغير'],rl:['rotl','تدوير 15° لليسار'],rr:['rotr','تدوير 15° لليمين'],rz:['compass','إعادة الاتجاه وملاءمة الشاشة'],ptn:['handshake','إدارة الشركاء'],bkp:['download','تصدير نسخة احتياطية (Excel)'],aud:['key','حسابات المديرين'],prc:['tag','تسعير الوحدات دفعة واحدة']};
  for(const k in M){const e=$(k);e.innerHTML=ic(M[k][0])+e.innerHTML;e.title=M[k][1]}
  document.querySelectorAll('.kic').forEach(e=>e.innerHTML=ic(e.dataset.i))}
 let hsig='',ksig='';
@@ -2779,7 +2779,7 @@ function bulkUI(){
 $('prc').onclick=bulkUI;
 const FBCFG={apiKey:"AIzaSyAVk4btYUFVVMCnijkDCLj5u704_MWOzfA",authDomain:"sys-sale-residentia-units.firebaseapp.com",projectId:"sys-sale-residentia-units",storageBucket:"sys-sale-residentia-units.firebasestorage.app",messagingSenderId:"661051327583",appId:"1:661051327583:web:f4fbb3f6c9724a1d1407ea",measurementId:"G-M6Q9LDXQ8Z"};
 const FBV='10.14.1',FBU=n=>`https://www.gstatic.com/firebasejs/${FBV}/firebase-${n}.js`;
-const FB={ok:false,staff:false,uid:'',user:null,profile:null,inited:false,db:null,auth:null,M:null,app:null,explicit:false};
+const FB={aud:false,readonly:false,ok:false,staff:false,uid:'',user:null,profile:null,inited:false,db:null,auth:null,M:null,app:null,explicit:false};
 const synced={};let syncT=null,pt=0,firstSnap=false,reqFirst=false,unsubs=[];
 const newRid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const pubSig=u=>JSON.stringify([u.status,u.price||0,u.area||0,u.done||0,!!u.pend]);
@@ -2795,7 +2795,7 @@ function fbErr(e){console.error(e);const c=e&&e.code||'';toast(c==='permission-d
 function authMsg(e){const c=e&&e.code||'';return c==='auth/invalid-credential'||c==='auth/wrong-password'||c==='auth/user-not-found'||c==='auth/invalid-email'?'اسم المستخدم أو كلمة المرور غير صحيحة':c==='auth/too-many-requests'?'محاولات كثيرة، حاول لاحقاً':c==='auth/email-already-in-use'?'اسم المستخدم مستخدم مسبقاً':c==='auth/weak-password'?'كلمة المرور ضعيفة (6 أحرف على الأقل)':c==='auth/network-request-failed'?'تعذّر الاتصال بالإنترنت':'تعذّرت العملية: '+(c||e.message)}
 const setCN=()=>{const e=$('cn');e.textContent=FB.ok?'● متصل بقاعدة البيانات':'● وضع تجريبي (بدون حفظ)';e.style.color=FB.ok?'#16a34a':'#d97706'};
 log.unshift=function(...a){const r=Array.prototype.unshift.apply(this,a);a.forEach(persistLog);return r};
-function persistLog(e){if(!FB.ok||!FB.staff||e.who==='النظام')return;try{FB.M.addDoc(FB.M.collection(FB.db,'log'),{t:e.t,who:e.who,unit:String(e.unit),txt:e.txt,uid:FB.uid,ts:FB.M.serverTimestamp()}).catch(fbErr)}catch(x){}}
+function persistLog(e){if(!FB.ok||!FB.staff||FB.aud||e.who==='النظام')return;try{FB.M.addDoc(FB.M.collection(FB.db,'log'),{t:e.t,who:e.who,unit:String(e.unit),txt:e.txt,uid:FB.uid,ts:FB.M.serverTimestamp()}).catch(fbErr)}catch(x){}}
 function persistSettings(){if(FB.ok&&FB.staff&&role==='admin')FB.M.setDoc(FB.M.doc(FB.db,'settings','main'),{target,showLB},{merge:true}).catch(fbErr)}
 async function bootFB(){
  try{
@@ -2811,11 +2811,11 @@ function startPublic(){const M=FB.M,db=FB.db;
   schedPaint();if(!firstSnap){firstSnap=true;routeHash();queueSync()}},fbErr);
  M.onSnapshot(M.doc(db,'meta','init'),s=>{FB.inited=s.exists();updSeed()},()=>{})}
 async function onAuth(user){
- if(!user){FB.uid='';FB.staff=false;FB.user=null;FB.profile=null;stopStaff();if(role!=='view'){$('role').value='view';updRole()}updSeed();return}
+ if(!user){FB.uid='';FB.staff=false;FB.user=null;FB.profile=null;FB.aud=false;FB.readonly=false;stopStaff();if(role!=='view'){$('role').value='view';updRole()}updSeed();return}
  try{const s=await FB.M.getDoc(FB.M.doc(FB.db,'users',user.uid)),p=s.exists()?s.data():null;
-  if(!p||p.active===false||!['admin','sales','partner'].includes(p.role)||(p.role==='partner'&&!p.partnerId)){await FB.M.signOut(FB.auth);toast('هذا الحساب غير مفعّل في النظام. راجع المدير.');return}
-  FB.uid=user.uid;FB.user=user;FB.profile=p;FB.staff=p.role!=='partner';staff.length=0;if(p.role==='sales')staff.push({name:p.name,email:p.email,uid:user.uid});
-  close();enter(p.role,p.role==='sales'?p.name:'',!FB.explicit);FB.explicit=false;(p.role==='partner'?startPartner(p):startStaff(p));queueSync()
+  if(!p||p.active===false||!['admin','sales','partner','auditor'].includes(p.role)||(p.role==='partner'&&!p.partnerId)){await FB.M.signOut(FB.auth);toast('هذا الحساب غير مفعّل في النظام. راجع المدير.');return}
+  const ur=p.role==='auditor'?'admin':p.role;FB.aud=p.role==='auditor';FB.readonly=p.role==='admin'&&p.readonly===true;FB.uid=user.uid;FB.user=user;FB.profile=p;FB.staff=ur!=='partner';staff.length=0;if(ur==='sales')staff.push({name:p.name,email:p.email,uid:user.uid});
+  close();enter(ur,ur==='sales'?p.name:'',!FB.explicit);FB.explicit=false;(ur==='partner'?startPartner(p):startStaff({...p,role:ur}));if(FB.readonly)toast('حسابك بوضع القراءة فقط');queueSync()
  }catch(e){fbErr(e)}}
 function stopStaff(){unsubs.forEach(f=>{try{f()}catch(e){}});unsubs=[];reqFirst=false;Object.values(P).forEach(u=>{u.buyer=null;u.hold=null;if(synced[u.id]){delete synced[u.id].b;delete synced[u.id].h}});reqs.length=0;log.length=0;partners.length=0;PMAP={};Object.keys(synced).forEach(k=>{if(k[0]==='r')delete synced[k]});updBadge();schedPaint()}
 function startStaff(p){stopStaff();const M=FB.M,db=FB.db,L=[];
@@ -2826,7 +2826,7 @@ function startStaff(p){stopStaff();const M=FB.M,db=FB.db,L=[];
  L.push(M.onSnapshot(M.collection(db,'partners'),s=>{s.docChanges().forEach(c=>{const i=partners.findIndex(p=>p.id===c.doc.id);if(c.type==='removed'){if(i>=0)partners.splice(i,1);return}const d=c.doc.data(),p={id:c.doc.id,name:d.name,color:d.color,items:(d.items||[]).map(x=>[+x.a,+x.b])};if(i>=0)Object.assign(partners[i],p);else partners.push(p)});rebuildPmap();ptvBtn();schedPaint()},fbErr));
  L.push(M.onSnapshot(M.doc(db,'settings','main'),s=>{if(s.exists()){const d=s.data();target=+d.target||10;showLB=d.showLB!==false;updRole()}},()=>{}));
  if(p.role==='admin'){
-  L.push(M.onSnapshot(M.collection(db,'users'),s=>{staff.length=0;pusers.length=0;s.forEach(d=>{const x=d.data();if(x.role==='sales'&&x.active!==false)staff.push({name:x.name,email:x.email,username:x.username||'',uid:d.id});if(x.role==='partner')pusers.push({uid:d.id,...x})})},fbErr));
+  L.push(M.onSnapshot(FB.aud?M.collection(db,'users'):M.query(M.collection(db,'users'),M.where('role','in',['admin','sales','partner'])),s=>{staff.length=0;pusers.length=0;admUsers.length=0;s.forEach(d=>{const x=d.data();if(FB.aud&&x.role==='admin')admUsers.push({uid:d.id,...x});if(x.role==='sales'&&x.active!==false)staff.push({name:x.name,email:x.email,username:x.username||'',uid:d.id});if(x.role==='partner')pusers.push({uid:d.id,...x})})},fbErr));
   L.push(M.onSnapshot(M.query(M.collection(db,'log'),M.orderBy('ts','desc'),M.limit(200)),s=>{const a=[];s.forEach(d=>{const x=d.data();a.push({t:x.t,who:x.who,unit:x.unit,txt:x.txt})});log.length=0;Array.prototype.push.apply(log,a)},fbErr))}
  unsubs=L}
 function queueSync(){if(!FB.ok||!FB.staff)return;clearTimeout(syncT);syncT=setTimeout(syncAll,350)}
@@ -2985,6 +2985,63 @@ function setUnitPartner(id,pid,ch){const old=PMAP[id]||'';if(old===pid)return;co
  if(op){const s=setOf(op);s.delete(id);op.items=toItems(s);persistPartner(op)}
  if(np){const s=setOf(np);s.add(id);np.items=toItems(s);persistPartner(np)}
  rebuildPmap();ch.push(`الشريك: ${op?op.name:'بدون'} ← ${np?np.name:'بدون'}`)}
+const admUsers=[];
+function backupXL(){
+ if(role!=='admin')return;
+ if(typeof XLSX==='undefined'){toast('تعذّر تحميل مكتبة Excel. تأكد من الاتصال بالإنترنت ثم أعد المحاولة.');return}
+ try{
+  const A=Object.values(P).sort((a,b)=>a.id-b.id),SL={build:'قيد الإنجاز',avail:'منجزة',sold:'مباعة'},now=new Date(),pad=x=>String(x).padStart(2,'0');
+  const rng=p=>p.items.map(([a,b])=>a===b?a:a+'-'+b).join(', ');
+  const H=['رقم الوحدة','المساحة','السعر','نسبة الإنجاز','الحالة','اسم الحاجز','الهاتف','رقم الهوية','تاريخ الحجز',...OR.map(o=>'دفعة '+o),'المسؤول','الشريك'];
+  const rows=A.map(u=>{const b=u.buyer,p=partners.find(x=>x.id===PMAP[u.id]);return [u.id,u.area||'',u.price||'',u.done||0,SL[u.status],b?b.name:'',b?b.phone:'',b?b.idn:'',b?b.date:'',...OR.map((o,i)=>b&&b.pays&&+b.pays[i]?+b.pays[i]:''),b?b.agent:'',p?p.name:'']});
+  const sheets=[['الوحدات',[H,...rows],[12,10,16,12,14,24,15,16,14,...OR.map(()=>14),16,18]]];
+  const ps=partnerStats();
+  if(ps.length)sheets.push(['الشركاء',[['الشريك','عدد الوحدات','الوحدات','المباعة','المعروضة','قيد الإنجاز','قيمة المبيعات','المستلم','المستحق'],...ps.map(s=>[s.p.name,s.n,rng(s.p),s.sold,s.av,s.bd,s.sv,s.rc,s.due])],[20,12,40,10,10,12,16,16,16]]);
+  const pl=[['رقم الوحدة','اسم الحاجز','البيان','الاستحقاق','المبلغ']];A.forEach(u=>{if(u.buyer&&u.buyer.plan)u.buyer.plan.forEach(p=>pl.push([u.id,u.buyer.name,p.k,p.due,p.amt]))});
+  if(pl.length>1)sheets.push(['جدول الدفعات',pl,[12,24,14,14,16]]);
+  sheets.push(['طلبات البيع',[['رقم الوحدة','الموظف','تاريخ الطلب','الحالة','اسم المشتري','القرار بواسطة','تاريخ القرار','الملاحظة'],...reqs.map(r=>[r.unit,r.by,dtf(r.at),r.status==='pending'?'بانتظار الموافقة':r.status==='approved'?'موافق عليه':'مرفوض',r.buyer.name,r.by2||'',r.decAt?dtf(r.decAt):'',r.note||''])],[12,16,18,16,24,16,18,30]]);
+  sheets.push(['سجل التغييرات',[['الوقت','المستخدم','الوحدة','العملية'],...log.map(l=>[l.t,l.who,l.unit,l.txt])],[12,18,10,70]]);
+  const c=s=>A.filter(u=>u.status===s).length;
+  sheets.push(['معلومات',[['نسخة احتياطية — مجمع الإسراء السكني'],['تاريخ التصدير',now.toLocaleDateString('en-GB')+' '+now.toLocaleTimeString('en-GB')],['عدد الوحدات',A.length],['قيد الإنجاز',c('build')],['منجزة (معروضة)',c('avail')],['مباعة',c('sold')],[],['تنبيه','هذا الملف يحتوي بيانات المشترين والدفعات. احفظه في مكان آمن ولا تشاركه.'],['الاستعادة','ورقة "الوحدات" قابلة للرفع مباشرة عبر زر "رفع Excel".']],[22,70]]);
+  const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};
+  sheets.forEach(([n,d,w])=>{const ws=XLSX.utils.aoa_to_sheet(d);ws['!cols']=w.map(x=>({wch:x}));XLSX.utils.book_append_sheet(wb,ws,n)});
+  const fn=`نسخة_احتياطية_مجمع_الإسراء_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.xlsx`;
+  XLSX.writeFile(wb,fn);log.unshift({t:TS(),who:WH(),unit:'—',txt:'تصدير نسخة احتياطية'});toast('تم تنزيل النسخة الاحتياطية')
+ }catch(e){console.error(e);toast('تعذّر إنشاء النسخة الاحتياطية: '+(e&&e.message||e))}}
+$('bkp').onclick=backupXL;
+async function rotAdmin(u,nu,pw){
+ const M=FB.M;if(!userOk(nu))throw{code:'x',message:'اسم المستخدم من 3 إلى 24 حرفاً: أحرف إنجليزية صغيرة وأرقام و . _ -'};
+ if(nu!==u.username){const ex=await M.getDoc(M.doc(FB.db,'authmap',nu)).catch(()=>null);if(ex&&ex.exists())throw{code:'auth/email-already-in-use'}}
+ const em=nu+'.'+Date.now().toString(36)+'@'+UDOM,app2=(M.getApps().find(a=>a.name==='sec'))||M.initializeApp(FBCFG,'sec'),a2=M.getAuth(app2),cred=await M.createUserWithEmailAndPassword(a2,em,pw);await M.signOut(a2);
+ await M.setDoc(M.doc(FB.db,'users',cred.user.uid),{name:u.name,username:nu,email:em,role:'admin',active:u.active!==false,readonly:!!u.readonly});
+ await M.setDoc(M.doc(FB.db,'authmap',nu),{email:em});
+ if(nu!==u.username)await M.deleteDoc(M.doc(FB.db,'authmap',u.username)).catch(()=>{});
+ await M.deleteDoc(M.doc(FB.db,'users',u.uid))}
+function audUI(){
+ if(!FB.aud||role!=='admin')return;
+ open_(`<h2>${ic('key')} حسابات المديرين</h2>`+(admUsers.length?admUsers.map((u,i)=>`<div class="r" style="align-items:center"><span><b>${esc(u.name)}</b><br><small style="color:var(--mut)"><bdi>${esc(u.username||'')}</bdi> · ${u.active===false?'معطّل':u.readonly?'قراءة فقط':'مفعّل'}</small></span><button class="s" data-am="${i}">إدارة</button></div>`).join(''):'<div class="note">لا توجد حسابات مديرين.</div>')
+  +`<div class="sec">إنشاء مدير جديد</div>`+inp('am_n','الاسم','')+inp('am_u','اسم المستخدم (أحرف إنجليزية وأرقام)','')+inp('am_p','كلمة المرور (6 أحرف على الأقل)','','password')+`<div id="ame" class="note" style="display:none;color:var(--build)"></div><button class="x pri" id="am_add">إنشاء الحساب</button><button class="x" id="am_me">تغيير كلمة مروري</button><button class="x" id="cl">إغلاق</button>`);
+ $('cl').onclick=close;$('am_u').style.direction='ltr';
+ document.querySelectorAll('#card button[data-am]').forEach(b=>b.onclick=()=>audMgr(admUsers[+b.dataset.am].uid));
+ $('am_add').onclick=async()=>{const n=$('am_n').value.trim(),un=normU($('am_u').value),pw=$('am_p').value,er=m=>{$('ame').textContent=m;$('ame').style.display='block'};
+  if(!n)return er('اكتب الاسم');if(pw.length<6)return er('يجب ألا تقل كلمة المرور عن 6 أحرف');
+  try{await mkAccount('admin',n,un,pw,{});setTimeout(audUI,600)}catch(e){er(e&&e.code==='x'?e.message:authMsg(e))}};
+ $('am_me').onclick=()=>{open_(`<h2>تغيير كلمة مروري</h2>`+inp('pw0','كلمة المرور الحالية','','password')+inp('pw1','كلمة المرور الجديدة (6 أحرف على الأقل)','','password')+inp('pw2','تأكيد كلمة المرور','','password')+`<div id="pe" class="note" style="display:none;color:var(--build)"></div><button class="x pri" id="pok">حفظ</button><button class="x" id="pbk">رجوع</button>`);
+  $('pbk').onclick=audUI;$('pok').onclick=async()=>{const a=$('pw1').value,er=m=>{$('pe').textContent=m;$('pe').style.display='block'};if(a.length<6)return er('يجب ألا تقل كلمة المرور عن 6 أحرف');if(a!==$('pw2').value)return er('تأكيد كلمة المرور غير مطابق');
+   try{const M=FB.M;await M.reauthenticateWithCredential(FB.user,M.EmailAuthProvider.credential(FB.user.email,$('pw0').value));await M.updatePassword(FB.user,a);toast('تم تغيير كلمة المرور');audUI()}catch(e){er(authMsg(e))}}}}
+function audMgr(uid){
+ const u=admUsers.find(x=>x.uid===uid);if(!u||!FB.aud)return;
+ open_(`<h2>إدارة حساب المدير ${esc(u.name)}</h2>`+R('اسم الدخول',`<bdi>${esc(u.username||'')}</bdi>`)+R('الحالة',u.active===false?'معطّل':u.readonly?'قراءة فقط':'مفعّل')
+  +`<div class="sec">تغيير اسم الدخول وكلمة المرور</div>`+inp('am_nu','اسم المستخدم الجديد',u.username||'')+inp('am_np','كلمة المرور الجديدة (6 أحرف على الأقل)','','password')+`<div id="ame" class="note" style="display:none;color:var(--build)"></div><button class="x pri" id="am_rot">حفظ</button>`
+  +`<div class="sec">الصلاحيات</div><button class="x" id="am_ro">${u.readonly?'إلغاء وضع القراءة فقط':'تقييد: قراءة فقط'}</button><button class="x ${u.active===false?'pri':'dan'}" id="am_ac">${u.active===false?'تفعيل الحساب':'تعطيل الحساب'}</button><button class="x dan" id="am_del">حذف الحساب نهائياً</button><button class="x" id="pbk">رجوع</button>`);
+ $('am_nu').style.direction='ltr';$('pbk').onclick=audUI;
+ $('am_rot').onclick=async()=>{const nu=normU($('am_nu').value),pw=$('am_np').value,er=m=>{$('ame').textContent=m;$('ame').style.display='block'};if(pw.length<6)return er('يجب ألا تقل كلمة المرور عن 6 أحرف');
+  try{await rotAdmin(u,nu,pw);toast('تم التحديث');setTimeout(audUI,700)}catch(e){er(e&&e.code==='x'?e.message:authMsg(e))}};
+ $('am_ro').onclick=async()=>{try{await FB.M.setDoc(FB.M.doc(FB.db,'users',uid),{readonly:!u.readonly},{merge:true});setTimeout(()=>audMgr(uid),500)}catch(e){fbErr(e)}};
+ $('am_ac').onclick=async()=>{try{await FB.M.setDoc(FB.M.doc(FB.db,'users',uid),{active:u.active===false},{merge:true});setTimeout(()=>audMgr(uid),500)}catch(e){fbErr(e)}};
+ $('am_del').onclick=async()=>{if(!confirm(`حذف حساب المدير ${u.name} نهائياً؟`)||!confirm('تأكيد أخير: لا يمكن التراجع.'))return;
+  try{await FB.M.deleteDoc(FB.M.doc(FB.db,'users',uid));if(u.username)await FB.M.deleteDoc(FB.M.doc(FB.db,'authmap',u.username)).catch(()=>{});setTimeout(audUI,600)}catch(e){fbErr(e)}}}
+$('aud').onclick=audUI;
 function repData(){
  const A=Object.values(P),of=s=>A.filter(u=>u.status===s),sold=of('sold'),av=of('avail'),bd=of('build'),sum=(a,f)=>a.reduce((s,u)=>s+f(u),0);
  return{A,sold,av,bd,sp:sum(sold,u=>u.price||0),rc:sum(sold,u=>pd_(u.buyer)),offp:sum(av,u=>u.price||0),due:sum(sold,u=>Math.max(0,(u.price||0)-pd_(u.buyer))),nop:sold.filter(u=>!u.price).length,over:sold.filter(u=>u.price&&pd_(u.buyer)>u.price).length}}
