@@ -3071,10 +3071,11 @@ function startPublic(){const M=FB.M,db=FB.db;
 async function onAuth(user){
  if(!user){gateState(true);gateShow();FB.uid='';FB.staff=false;FB.user=null;FB.profile=null;FB.aud=false;FB.readonly=false;stopStaff();if(role!=='view'){$('role').value='view';updRole()}updSeed();return}
  try{const s=await FB.M.getDoc(FB.M.doc(FB.db,'users',user.uid)),p=s.exists()?s.data():null;
-  if(!p||p.active===false||!['admin','sales','partner','auditor'].includes(p.role)||(p.role==='partner'&&!p.partnerId)){await FB.M.signOut(FB.auth);toast('هذا الحساب غير مفعّل في النظام. راجع المدير.');gateErr('هذا الحساب غير مفعّل في النظام. راجع المدير.');return}
+  const bad=!p?`لا يوجد مستند لهذا الحساب في مجموعة users. يجب أن يكون Document ID مطابقاً لمعرّف المستخدم: ${user.uid}`:p.active===false||String(p.active)==='false'?'هذا الحساب معطّل (الحقل active = false)':!['admin','sales','partner','auditor'].includes(p.role)?`الحقل role غير صحيح، والمسجّل: «${p.role}» (القيم المسموحة: admin, sales, partner, auditor)`:(p.role==='partner'&&!p.partnerId)?'حساب الشريك غير مرتبط بشريك (partnerId)':'';
+  if(bad){await FB.M.signOut(FB.auth);toast(bad);gateErr(bad);return}
   const ur=p.role==='auditor'?'admin':p.role;FB.aud=p.role==='auditor';FB.readonly=p.role==='admin'&&p.readonly===true;FB.uid=user.uid;FB.user=user;FB.profile=p;FB.staff=ur!=='partner';staff.length=0;if(ur==='sales')staff.push({name:p.name,email:p.email,uid:user.uid});
   close();gateHide();gateErr('');$('gp').value='';enter(ur,ur==='sales'?p.name:'',!FB.explicit);FB.explicit=false;(ur==='partner'?startPartner(p):startStaff({...p,role:ur}));if(FB.readonly)toast('حسابك بوضع القراءة فقط');queueSync()
- }catch(e){fbErr(e)}}
+ }catch(e){fbErr(e);if(!FB.uid){gateErr('تعذّرت قراءة بيانات الحساب ('+(e&&e.code||e&&e.message||'خطأ')+'). تأكد من نشر قواعد Firestore.');try{await FB.M.signOut(FB.auth)}catch(x){}}}}
 function stopStaff(){unsubs.forEach(f=>{try{f()}catch(e){}});unsubs=[];reqFirst=false;Object.values(P).forEach(u=>{u.buyer=null;u.hold=null;if(synced[u.id]){delete synced[u.id].b;delete synced[u.id].h}});reqs.length=0;log.length=0;partners.length=0;PMAP={};zones.length=0;ZMAP={};Object.keys(synced).forEach(k=>{if(k[0]==='r')delete synced[k]});updBadge();schedPaint()}
 function startStaff(p){stopStaff();const M=FB.M,db=FB.db,L=[];
  L.push(M.onSnapshot(M.collection(db,'buyers'),s=>{s.docChanges().forEach(c=>{const x=P[+c.doc.id];if(!x)return;x.buyer=c.type==='removed'?null:normBuyer(c.doc.data());synced[x.id]=Object.assign(synced[x.id]||{},{b:bSig(x)})});schedPaint()},fbErr));
@@ -3656,7 +3657,7 @@ $('gform').onsubmit=async e=>{e.preventDefault();gateErr('');const un=normU($('g
  if(!FB.ok)return gateErr('الاتصال بقاعدة البيانات غير جاهز بعد، حاول بعد لحظات');if(!un||!pw)return gateErr('اكتب اسم المستخدم وكلمة المرور');
  const b=$('gbtn');b.disabled=true;b.textContent='جارٍ التحقق...';FB.explicit=true;
  try{let em=un.includes('@')?un:uEmail(un);try{const s=await FB.M.getDoc(FB.M.doc(FB.db,'authmap',un));if(s.exists())em=s.data().email}catch(x){}
-  await FB.M.signInWithEmailAndPassword(FB.auth,em,pw)}catch(x){FB.explicit=false;gateErr(authMsg(x))}
+  await FB.M.signInWithEmailAndPassword(FB.auth,em,pw)}catch(x){FB.explicit=false;gateErr(authMsg(x)+(x&&x.code?' ['+x.code+']':''))}
  b.disabled=false;b.textContent='تسجيل الدخول'};
 gateShow();gateState(false);
 setTimeout(()=>{if($('gchk').style.display!=='none'&&!FB.ok){gateHide()}},12000);
