@@ -342,6 +342,7 @@ table.mt{width:100%;border-collapse:collapse;font-size:12.5px}table.mt th,table.
 <label class="gf"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><input id="gp" name="password" type="password" dir="ltr" autocomplete="current-password" placeholder="كلمة المرور" aria-label="كلمة المرور"><button type="button" id="gsh" aria-label="إظهار كلمة المرور"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></label>
 <div id="gerr" role="alert"></div>
 <button id="gbtn" type="submit">تسجيل الدخول</button>
+<button type="button" id="gforgot" class="glink">نسيت كلمة المرور؟</button>
 <button type="button" id="gview" class="glink">الدخول إلى شاشة العرض العامة</button>
 </div></form></div>
 <div id="toast"></div>
@@ -2656,6 +2657,10 @@ const P={},log=[];let role='admin',flt='all';
 D.PL.forEach(a=>P[a[0]]={id:a[0],d:a[1],cx:a[2],cy:a[3],area:a[4],apx:a[5],status:'build',price:0,done:0,views:0,hold:null,pend:false,buyer:null});
 const R=(a,b)=>`<div class="r"><span>${a}</span><span>${b}</span></div>`;
 const inp=(i,l,v,t='text')=>`<label class="f">${l}<input id="${i}" type="${t}" value="${String(v).replace(/"/g,'&quot;')}"></label>`;
+const SLB={cash:'كاش',inst:'تقسيط'},SALET=b=>b&&b.stype==='cash'?'cash':'inst',pdates=b=>{const d=(b&&b.dates)||(b&&b.pdates)||[];return ((b&&b.pays)||[]).map((_,i)=>d[i]||'')},instN=b=>Math.max(0,((b&&b.pays)||[]).length-1);
+const payHTML=(b,price)=>{const ds=pdates(b),paid=(b.pays||[]).reduce((s,x)=>s+(+x||0),0),rm=Math.max(0,(price||0)-paid),cash=SALET(b)==='cash';
+ return R('نوع البيع',`<b>${SLB[SALET(b)]}</b>`)+`<div class="sec">قائمة التسديدات</div>`+(b.pays||[]).map((x,i)=>R((i?(cash?'تسديد ':'القسط ')+i:'المقدمة')+(ds[i]?` — <bdi>${ds[i]}</bdi>`:''),fz(x))).join('')
+  +R('مجموع المسدد',fz(paid))+R('المبلغ المتبقي للتسديد',`<b>${fz(rm)}</b>`)+(cash&&b.due&&rm>0?R('موعد تسديد المتبقي',`<bdi>${b.due}</bdi>`):'')+(price&&paid>price?'<div class="note">تنبيه: مجموع الدفعات أكبر من سعر الوحدة.</div>':'')+(!price?'<div class="note">لم يُحدد سعر لهذه الوحدة بعد.</div>':'')};
 const fz=n=>Number(n||0).toLocaleString('en-US')+' د.ع',pd_=b=>(b&&b.pays?b.pays:[]).reduce((s,x)=>s+(+x||0),0),rem=u=>(u.price||0)-pd_(u.buyer);
 const fm=n=>n?Number(n).toLocaleString('en-US')+' د.ع':'غير محدد';
 const canEdit=u=>role==='admin'||(role==='sales'&&!pendingOf(u.id)&&!heldByOther(u)&&(u.status!=='sold'||(u.buyer&&u.buyer.agent===ME)));
@@ -2702,38 +2707,53 @@ function close(){$('ov').style.display='none'}
 function show(id){const u=P[id],s=ST[u.status];flashSel(id);if(role==='partner'&&!isMine(u)){open_(`<h2>غير متاح</h2><div class="note">هذه الوحدة غير متاحة لحسابك.</div><button class="x" id="cl">إغلاق</button>`);$('cl').onclick=close;return}u.views=(u.views||0)+1;
  let h=`<h2>القطعة ${u.id}</h2><span class="badge" style="background:${s.c};${u.status==='avail'?'color:#000':''}">${s.t}</span>`+R('المساحة',u.area?u.area+' م² (تقريبية)':'غير محددة')+(role==='partner'?'':R('السعر',fm(u.price)))+R('نسبة الإنجاز',`<span style="display:inline-flex;align-items:center;gap:8px"><span style="width:90px;height:8px;border-radius:4px;background:var(--bd);overflow:hidden;display:inline-block"><span style="display:block;height:100%;width:${u.done||0}%;background:#16468e"></span></span><b>${u.done||0}%</b></span>`)+(partnerOf(u)?R('الشريك',`<i class="pd2" style="background:${partnerOf(u).color}"></i>${esc(partnerOf(u).name)}`):'')+zoneRow(u);
  if(u.status==='sold'){if(role==='view'||(role==='partner'&&!(FB.profile&&FB.profile.seeBuyers&&u.buyer)))h+=`<div class="note">معلومات الحاجز غير معروضة.</div>`;
-  else{const b=u.buyer;h+=`<div class="sec">معلومات الحاجز</div>`+R('الاسم',esc(b.name))+R('الهاتف',`<bdi>${esc(b.phone)}</bdi>`)+R('رقم الهوية',`<bdi>${esc(b.idn)}</bdi>`)+R('تاريخ الحجز',`<bdi>${esc(b.date)}</bdi>`)+b.pays.map((x,i)=>R('دفعة '+OR[i],fz(x))).join('')+R('مجموع الدفعات',fz(pd_(b)))+R('المبلغ المتبقي للتسديد',`<b>${fz(Math.max(0,rem(u)))}</b>`)+(rem(u)<0&&u.price?'<div class="note">تنبيه: مجموع الدفعات أكبر من سعر الوحدة.</div>':'')+(!u.price?'<div class="note">لم يُحدد سعر لهذه الوحدة بعد.</div>':'')+R('المسؤول',esc(b.agent))}}
+  else{const b=u.buyer;h+=`<div class="sec">معلومات الحاجز</div>`+R('الاسم',esc(b.name))+R('الهاتف',`<bdi>${esc(b.phone)}</bdi>`)+R('رقم الهوية',`<bdi>${esc(b.idn)}</bdi>`)+R('تاريخ الحجز',`<bdi>${esc(b.date)}</bdi>`)+payHTML(b,u.price)+R('المسؤول',esc(b.agent))}}
  if(canEdit(u))h+=`<button class="x pri" id="ed">${u.status!=='sold'&&role==='sales'?'تعديل / حجز':'تعديل'}</button>`;
  if(role==='admin')h+=`<button class="x dan" id="udl">حذف الوحدة</button>`;
  else if(role==='sales'&&!pendingOf(u.id))h+=`<div class="note">هذا الحجز تابع لموظف آخر — للعرض فقط.</div>`;
  const pr=pendingOf(u.id);
  if(pr)h+=role==='admin'?`<div class="note">يوجد طلب بيع بانتظار موافقتك من الموظف ${esc(pr.by)}.</div><button class="x pri" id="rv">مراجعة طلب البيع</button>`:role==='sales'?'<div class="note">طلب بيع هذه الوحدة بانتظار موافقة المدير.</div>':'';
  h+=extraCard(u);h+=`<button class="x" id="cl">إغلاق</button>`;open_(h);$('cl').onclick=close;if($('ed'))$('ed').onclick=()=>edit(id);if($('udl'))$('udl').onclick=()=>deleteUnit(id);if($('rv'))$('rv').onclick=()=>reqView(pr.rid);bindExtra(u);enhanceCard(u)}
-function edit(id){const u=P[id],b=u.buyer||{name:'',phone:'',idn:'',date:new Date().toISOString().slice(0,10),pays:[0,0,0,0],agent:ME};
+const payRow=(i,a,d)=>`<div class="prow">`+inp('b_p'+i,`القسط ${i} (د.ع)`,a||0,'number')+inp('b_d'+i,`تاريخ القسط ${i}`,d||'','date')+`</div>`;
+const colP=()=>{const pays=[+$('b_p0').value||0],pd=[$('b_d0').value||''];document.querySelectorAll('#pays .prow').forEach(r=>{pays.push(+r.querySelector('input[type=number]').value||0);pd.push(r.querySelector('input[type=date]').value||'')});return{pays,pd}};
+function edit(id){const u=P[id],b=u.buyer||{name:'',phone:'',idn:'',date:new Date().toISOString().slice(0,10),pays:[0],pdates:[''],stype:'inst',due:'',agent:ME};
  let h=`<h2>تعديل — القطعة ${u.id}</h2>`;
  h+=`<label class="f">الحالة<select id="e_st">${Object.keys(ST).map(k=>`<option value="${k}" ${k===u.status?'selected':''}>${ST[k].t}</option>`).join('')}</select></label>`;
  h+=inp('e_done','نسبة الإنجاز (%)',u.done||0,'number');if(role==='admin'&&zones.length)h+=`<label class="f">الزون${zoneSel('e_zn',ZMAP[u.id]||'')}</label>`;if(role==='sales')h+='<div class="note">سعر الوحدة ومساحتها يحددهما المدير فقط.</div>';if(role==='sales'&&u.status!=='sold')h+='<div class="note">تغيير الحالة إلى "مباعة" يرسل طلباً إلى المدير، ولا تُسجَّل الوحدة مباعة إلا بعد موافقته.</div>';
  if(role==='admin')h+=inp('e_area','المساحة (م²)',u.area,'number')+inp('e_price','السعر (د.ع)',u.price,'number');if(role==='admin'&&partners.length)h+=`<label class="f">الشريك<select id="e_pt"><option value="">بدون شريك</option>${partners.map(p=>`<option value="${p.id}" ${PMAP[u.id]===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select></label>`;
- h+=`<div class="sec">بيانات الحاجز (تُحفظ إذا الحالة مباعة)</div>`+inp('b_name','الاسم الكامل',b.name)+inp('b_phone','الهاتف',b.phone)+inp('b_idn','رقم الهوية',b.idn)+inp('b_date','تاريخ الحجز',b.date,'date')+'<div id="pays">'+b.pays.map((x,i)=>inp('b_p'+(i+1),`دفعة ${OR[i]} (د.ع)`,x,'number')).join('')+'</div><div style="display:flex;gap:8px"><button class="x" id="addp">+ إضافة دفعة</button><button class="x" id="delp">− حذف آخر دفعة</button></div><div class="note">من 4 إلى 10 دفعات كحد أقصى.</div>';
+ h+=`<div class="sec">بيانات الحاجز (تُحفظ إذا الحالة مباعة)</div>`+inp('b_name','الاسم الكامل',b.name)+inp('b_phone','الهاتف',b.phone)+inp('b_idn','رقم الهوية',b.idn)+inp('b_date','تاريخ الحجز',b.date,'date')+`<div class="sec">نظام البيع</div><label class="f">نوع البيع<select id="b_type"><option value="inst" ${SALET(b)==='inst'?'selected':''}>تقسيط</option><option value="cash" ${SALET(b)==='cash'?'selected':''}>كاش</option></select></label>`
+  +inp('b_p0','المقدمة (د.ع)',(b.pays||[])[0]||0,'number')+inp('b_d0','تاريخ المقدمة',pdates(b)[0]||'','date')
+  +`<div id="cashb"><div class="r"><span>المتبقي من سعر الوحدة</span><b id="cash_rm"></b></div>`+inp('b_due','تاريخ تسديد المتبقي',b.due||'','date')+`</div>`
+  +`<div id="instb"><div class="sec" id="inst_t"></div><div id="pays">`+(b.pays||[]).slice(1).map((x,i)=>payRow(i+1,x,pdates(b)[i+1])).join('')+`</div><div style="display:flex;gap:8px"><button class="x" id="addp">+ إضافة قسط</button><button class="x" id="delp">− حذف آخر قسط</button></div></div>`;
  h+=`<button class="x pri" id="sv">حفظ</button><button class="x" id="bk">رجوع</button>`;open_(h);$('bk').onclick=()=>show(id);
- $('addp').onclick=()=>{const c=document.querySelectorAll('#pays input').length;if(c>=10){alert('الحد الأقصى 10 دفعات');return}const d=document.createElement('div');d.innerHTML=inp('b_p'+(c+1),`دفعة ${OR[c]} (د.ع)`,0,'number');$('pays').appendChild(d.firstElementChild)};
- $('delp').onclick=()=>{const L=document.querySelectorAll('#pays input');if(L.length<=4){alert('الحد الأدنى 4 دفعات');return}const l=L[L.length-1];if(+l.value&&!confirm('تحتوي الدفعة الأخيرة على مبلغ. هل تؤكد الحذف؟'))return;l.parentElement.remove()};
- $('sv').onclick=()=>{const v=i=>$(i).value,ch=[];const nd=Math.round(+v('e_done')),prevSt=u.status;if(!(nd>=0&&nd<=100)){alert('يجب أن تكون نسبة الإنجاز بين 0 و100');return}if([...document.querySelectorAll('#pays input')].some(i=>+i.value<0)){alert('لا يجوز أن تكون المبالغ سالبة');return}const set=(o,k,x,l)=>{if(String(o[k])!==String(x)){ch.push(`${l}: ${o[k]} ← ${x}`);o[k]=x}};
+ const nR=()=>document.querySelectorAll('#pays .prow').length,isC=()=>$('b_type').value==='cash';
+ const updT=()=>{const c=isC(),n=nR();$('cashb').style.display=c?'':'none';$('instb').style.display=(!c||n)?'':'none';$('inst_t').textContent=c?'التسديدات اللاحقة':'الأقساط';$('addp').style.display=n>=10?'none':'';$('delp').style.display=n?'':'none';
+  const dn=+$('b_p0').value||0,oth=colP().pays.slice(1).reduce((x,y)=>x+y,0);$('cash_rm').textContent=u.price?fz(Math.max(0,u.price-dn-oth)):'يحدده المدير'};
+ $('b_type').onchange=updT;$('b_p0').oninput=updT;
+ $('addp').onclick=()=>{const c=nR();if(c>=10)return;const d=document.createElement('div');d.innerHTML=payRow(c+1,0,'');$('pays').appendChild(d.firstElementChild);updT()};
+ $('delp').onclick=()=>{const L=document.querySelectorAll('#pays .prow');if(!L.length)return;const l=L[L.length-1];if(+l.querySelector('input[type=number]').value&&!confirm('يحتوي آخر قسط على مبلغ. هل تؤكد الحذف؟'))return;l.remove();updT()};updT();
+ $('sv').onclick=()=>{const v=i=>$(i).value,ch=[];const nd=Math.round(+v('e_done')),prevSt=u.status;if(!(nd>=0&&nd<=100)){alert('يجب أن تكون نسبة الإنجاز بين 0 و100');return}if(colP().pays.some(x=>x<0)){alert('لا يجوز أن تكون المبالغ سالبة');return}const set=(o,k,x,l)=>{if(String(o[k])!==String(x)){ch.push(`${l}: ${o[k]} ← ${x}`);o[k]=x}};
   const ns=v('e_st');if(ns==='sold'&&!v('b_name').trim()){alert('اكتب اسم الحاجز');return}
+  if(ns==='sold'){const cp0=colP();if(cp0.pays[0]>0&&!cp0.pd[0]){alert('حدد تاريخ المقدمة');return}if(cp0.pays.some((x,i)=>i&&x>0&&!cp0.pd[i])){alert('حدد تاريخ كل قسط');return}if(v('b_type')==='cash'&&u.price&&u.price-cp0.pays.reduce((x,y)=>x+y,0)>0&&!v('b_due')){alert('حدد تاريخ تسديد المتبقي');return}}
   if(role==='sales'&&u.status==='sold'&&ns!=='sold'){alert('إلغاء البيع من صلاحية المدير فقط');return}
   if(role==='sales'&&ns==='sold'&&u.status!=='sold'){
    if(pendingOf(u.id)){alert('يوجد طلب بيع لهذه الوحدة بانتظار موافقة المدير');return}
    if(heldByOther(u)){alert('الوحدة محجوزة مؤقتاً لموظف آخر');return}
    if(PMAP[u.id]){alert('هذه الوحدة مخصصة لشريك، والبيع من صلاحية المدير');return}
-   const ps=[...document.querySelectorAll('#pays input')].map(i=>+i.value||0);
-   u.pend=true;reqs.push({rid:newRid(),byUid:FB.uid||'',unit:u.id,by:ME,at:new Date(),status:'pending',buyer:{name:v('b_name').trim(),phone:v('b_phone').trim(),idn:v('b_idn').trim(),date:v('b_date'),pays:ps},note:'',seen:false});
+   const cp=colP();
+   u.pend=true;reqs.push({rid:newRid(),byUid:FB.uid||'',unit:u.id,by:ME,at:new Date(),status:'pending',buyer:{name:v('b_name').trim(),phone:v('b_phone').trim(),idn:v('b_idn').trim(),date:v('b_date'),stype:v('b_type'),pays:cp.pays,pdates:cp.pd,due:v('b_due')},note:'',seen:false});
    if(u.done!==nd){log.unshift({t:TS(),who:WH(),unit:u.id,txt:`نسبة الإنجاز: ${u.done||0} ← ${nd}`});u.done=nd}
    log.unshift({t:TS(),who:WH(),unit:u.id,txt:'طلب بيع بانتظار موافقة المدير'});
    paint();updBadge();open_(`<h2>تم إرسال طلب البيع</h2><div class="note">أُرسل طلب بيع الوحدة ${u.id} إلى المدير. تبقى حالة الوحدة كما هي إلى أن يوافق عليه.</div><button class="x" id="cl">إغلاق</button>`);$('cl').onclick=close;return}
   if(ns!==u.status){ch.push(`الحالة: ${ST[u.status].t} ← ${ST[ns].t}`);u.status=ns;if(ns==='sold')flashSold(u.id)}
   {let fd=nd;if(ns==='avail'&&prevSt==='build'&&fd<100)fd=100;set(u,'done',fd,'نسبة الإنجاز')}
   if(role==='admin'){set(u,'area',+v('e_area'),'المساحة');set(u,'price',+v('e_price'),'السعر')}
-  if(u.status==='sold'){if(!u.buyer)u.buyer={...b,agent:ME};set(u.buyer,'name',v('b_name'),'الاسم');set(u.buyer,'phone',v('b_phone'),'الهاتف');set(u.buyer,'idn',v('b_idn'),'الهوية');set(u.buyer,'date',v('b_date'),'التاريخ');{const ps=[...document.querySelectorAll('#pays input')].map(i=>+i.value||0),old=u.buyer.pays;ps.forEach((x,i)=>{if(old[i]!==x)ch.push(`دفعة ${OR[i]}: ${old[i]===undefined?'—':fz(old[i])} ← ${fz(x)}`)});if(old.length>ps.length)ch.push(`حذف ${old.length-ps.length} دفعة`);u.buyer.pays=ps}}else u.buyer=null;
+  if(u.status==='sold'){if(!u.buyer)u.buyer={...b,agent:ME};set(u.buyer,'name',v('b_name'),'الاسم');set(u.buyer,'phone',v('b_phone'),'الهاتف');set(u.buyer,'idn',v('b_idn'),'الهوية');set(u.buyer,'date',v('b_date'),'التاريخ');{const c=colP(),old=u.buyer.pays||[],od=pdates(u.buyer),nt=v('b_type'),lb=i=>i?'القسط '+i:'المقدمة';
+   if(SALET(u.buyer)!==nt)ch.push(`نوع البيع: ${SLB[SALET(u.buyer)]} ← ${SLB[nt]}`);
+   c.pays.forEach((x,i)=>{if(old[i]!==x)ch.push(`${lb(i)}: ${old[i]===undefined?'—':fz(old[i])} ← ${fz(x)}`);else if((od[i]||'')!==(c.pd[i]||''))ch.push(`تاريخ ${lb(i)}: ${od[i]||'—'} ← ${c.pd[i]||'—'}`)});
+   if(old.length>c.pays.length)ch.push(`حذف ${old.length-c.pays.length} قسط`);
+   if((u.buyer.due||'')!==v('b_due')&&nt==='cash')ch.push(`موعد تسديد المتبقي: ${u.buyer.due||'—'} ← ${v('b_due')||'—'}`);
+   u.buyer.stype=nt;u.buyer.pays=c.pays;u.buyer.pdates=c.pd;u.buyer.due=nt==='cash'?v('b_due'):''}}else u.buyer=null;
   if(role==='admin'&&$('e_pt'))setUnitPartner(u.id,$('e_pt').value,ch);if(role==='admin'&&$('e_zn'))setUnitZone(u.id,$('e_zn').value,ch);if(ch.length)log.unshift({t:new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),who:WH(),unit:u.id,txt:ch.join(' | ')});
   paint();show(id)}}
 
@@ -2764,7 +2784,7 @@ function parseXL(rows){
   seen.add(id);const nums={};let bad=false;
   ['area','price','done','p1','p2','p3','p4','p5','p6','p7','p8','p9','p10'].forEach(f=>{const v=g(f);if(String(v).trim()==='')return;const n=toNum(v);if(isNaN(n)||n<0){bad=true;err.push(`سطر ${L}: قيمة غير صحيحة في "${FN[f]}"`)}else nums[f]=n});
   if(bad)return;if(nums.done!==undefined&&nums.done>100){err.push(`سطر ${L}: نسبة الإنجاز يجب أن تكون بين 0 و100`);return}
-  const name=String(g('name')).trim();let st=stOf(g('status'));
+  const name=String(g('name')).trim();let st=SALET(g('status'));
   if(st===null){err.push(`سطر ${L}: حالة غير معروفة (${g('status')})`);return}
   if(!st&&name)st='sold';
   if((st==='sold'||(!st&&P[id].status==='sold'))&&!name&&!P[id].buyer){err.push(`سطر ${L}: القطعة ${id} مباعة بدون اسم حاجز`);return}
@@ -2813,7 +2833,7 @@ function updRole(e){
  em.value=cur;em.style.display=role==='sales'?'':'none';
  ['stf','lgb','rep','rq','dsh','prc','ptn'].forEach(i=>$(i).style.display=role==='admin'?'':'none');['imp','bkp'].forEach(i=>$(i).style.display=role==='admin'&&(FB.aud||!FB.ok)?'':'none');['aud','mon','fbk'].forEach(i=>$(i).style.display=FB.aud&&role==='admin'?'':'none');{const sf=role==='admin'||role==='sales';$('ptv').style.display=sf?'':'none';$('pfl').style.display=sf?'':'none';if(!sf){pview=false;pfl='all'}ptvBtn()}$('lbb').style.display=role==='sales'&&showLB?'':'none';$('qrb').style.display=role==='admin'||role==='sales'?'':'none';$('mys').style.display=role==='partner'?'':'none';
  ME=role==='admin'?'المدير':role==='sales'?cur:'';
- document.body.classList.toggle('view',role==='view');$('who').textContent=role==='view'?'شاشة العرض':role==='admin'?(FB.ok?(FB.aud?'حساب مدقق النظام':'حساب مدير النظام'):'المدير'):role==='partner'?((FB.profile&&FB.profile.name)||'')+' (شريك)':ME+' (موظف مبيعات)';$('lo').innerHTML=bi(role==='view'?'key':'logout',role==='view'?'تسجيل الدخول':'تسجيل الخروج');updTabs();paint();updBadge();updSeed();syncGroups();fit();arm()}
+ document.body.classList.toggle('view',role==='view');$('who').textContent=role==='view'?'شاشة العرض':role==='admin'?(FB.ok?(FB.aud?'حساب مراقب النظام':'حساب مدير النظام'):'المدير'):role==='partner'?((FB.profile&&FB.profile.name)||'')+' (شريك)':ME+' (موظف مبيعات)';$('lo').innerHTML=bi(role==='view'?'key':'logout',role==='view'?'تسجيل الدخول':'تسجيل الخروج');updTabs();paint();updBadge();updSeed();syncGroups();fit();arm()}
 async function sha(s){s=String(s);if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('esraa|'+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}let h=5381;for(let k=0;k<3000;k++)for(const c of 'esraa|'+s)h=((h<<5)+h+c.charCodeAt(0))|0;return 'f'+h}
 let apw=null,fails=0,lockT=0;
 function enter(r,name,silent){$('role').value=r;cur=name;updRole();if(!silent)log.unshift({t:TS(),who:WH(),unit:'—',txt:'تسجيل دخول'});notifyLogin()}
@@ -2883,7 +2903,7 @@ function reqView(rid){
   +`<div class="sec">مقدّم الطلب</div>`+R('الموظف',esc(r.by))+R('تاريخ الطلب',`<bdi>${r.at.toLocaleDateString('en-GB')}</bdi>`)+R('وقت الطلب',`<bdi>${r.at.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</bdi>`)
   +`<div class="sec">بيانات الوحدة</div>`+R('رقم الوحدة',u.id)+R('المساحة',u.area?u.area+' م² (تقريبية)':'غير محددة')+(role==='partner'?'':R('السعر',fm(u.price)))+R('نسبة الإنجاز',(u.done||0)+'%')
   +`<div class="sec">بيانات المشتري</div>`+R('الاسم',esc(b.name))+R('الهاتف',`<bdi>${esc(b.phone)||'—'}</bdi>`)+R('رقم الهوية',`<bdi>${esc(b.idn)||'—'}</bdi>`)+R('تاريخ الحجز',`<bdi>${esc(b.date)||'—'}</bdi>`)
-  +`<div class="sec">الدفعات</div>`+b.pays.map((x,i)=>R('دفعة '+OR[i],fz(x))).join('')+R('مجموع الدفعات',fz(paid))+R('المبلغ المتبقي',`<b>${fz(rm)}</b>`);
+  +payHTML(b,u.price);
  if(!u.price)h+='<div class="note">تنبيه: لم يُحدد سعر لهذه الوحدة بعد.</div>';
  if(u.price&&paid>u.price)h+='<div class="note">تنبيه: مجموع الدفعات أكبر من سعر الوحدة.</div>';
  if(r.status==='pending'&&u.status==='sold')h+='<div class="note">تنبيه: الوحدة مسجلة كمباعة أصلاً.</div>';
@@ -2896,7 +2916,7 @@ function reqView(rid){
 function decide(rid,ok,reason){
  if(role!=='admin')return;const r=reqs.find(x=>x.rid===rid);if(!r||r.status!=='pending')return;const u=P[r.unit];
  if(ok&&u.status==='sold'){r.status='rejected';r.note='الوحدة مسجلة كمباعة مسبقاً';ok=false;reason=r.note;alert('لا يمكن الموافقة: الوحدة مسجلة كمباعة مسبقاً. تم رفض الطلب تلقائياً.')}
- else if(ok){flashSold(r.unit);u.status='sold';u.buyer={...r.buyer,pays:r.buyer.pays.slice(),agent:r.by};r.status='approved'}
+ else if(ok){flashSold(r.unit);u.status='sold';u.buyer={...r.buyer,pays:r.buyer.pays.slice(),pdates:(r.buyer.pdates||[]).slice(),agent:r.by};r.status='approved'}
  else{r.status='rejected';r.note=reason}
  u.pend=false;r.by2=ME;r.decAt=new Date();r.seen=false;
  log.unshift({t:TS(),who:WH(),unit:r.unit,txt:(ok?'موافقة على طلب بيع من الموظف ':'رفض طلب بيع من الموظف ')+r.by+(reason?' — السبب: '+reason:'')});
@@ -2909,7 +2929,7 @@ function calcPlan(price,down,n,start){down=Math.min(Math.max(0,+down||0),price);
 const leftTxt=ms=>{const m=Math.max(1,Math.ceil(ms/60000));return m>=60?Math.floor(m/60)+' ساعة و'+(m%60)+' دقيقة':m+' دقيقة'};
 const holdOf=u=>{const h=u.hold;if(!h)return null;if(Date.now()>=h.until){u.hold=null;log.unshift({t:TS(),who:'النظام',unit:u.id,txt:'انتهى الحجز المؤقت للزبون '+h.name});return null}return h};
 const heldByOther=u=>{const h=holdOf(u);return !!(h&&role==='sales'&&h.by!==ME)};
-const overdueOf=u=>{if(u.status!=='sold'||!u.buyer||!u.buyer.plan)return 0;const t=todayS();return Math.max(0,u.buyer.plan.filter(p=>p.due<=t).reduce((s,p)=>s+p.amt,0)-pd_(u.buyer))};
+const overdueOf=u=>{if(u.status!=='sold'||!u.buyer)return 0;const t=todayS();if(SALET(u.buyer)==='cash'&&u.buyer.due&&u.buyer.due<=t&&!u.buyer.plan)return Math.max(0,(u.price||0)-pd_(u.buyer));if(!u.buyer.plan)return 0;return Math.max(0,u.buyer.plan.filter(p=>p.due<=t).reduce((s,p)=>s+p.amt,0)-pd_(u.buyer))};
 function flashSold(id,remote){const u=P[id];if(!remote)u.hold=null;pulseId=id;setTimeout(()=>{pulseId=0;paint()},15000)}
 function animN(e,to){const from=+e.dataset.v||0;e.dataset.v=to;if(from===to){e.textContent=to;return}const t0=performance.now();(function f(t){const k=Math.min(1,(t-t0)/700);e.textContent=Math.round(from+(to-from)*k);if(k<1)requestAnimationFrame(f)})(t0)}
 setInterval(()=>{if(Object.values(P).some(u=>u.hold))paint()},30000);
@@ -2917,6 +2937,7 @@ function extraCard(u){
  let h=role==='admin'?`<button class="x pri" id="qpr">${u.price?'تعديل السعر والمساحة':'تحديد سعر الوحدة'}</button>`:'';const m=modelOf(u);
  if(m)h+=`<div class="sec">مخطط النموذج ${m.n} — ${u.area} م²</div><img alt="" src="${m.img}" style="width:100%;border-radius:10px;border:1px solid var(--bd)">`;
  if(role==='view'||role==='partner')return h;if(role==='sales'&&partnerOf(u))h+='<div class="note">هذه الوحدة مخصصة لشريك، والبيع أو الحجز المؤقت من صلاحية المدير.</div>';
+ if(u.status==='sold'&&u.buyer&&(role==='admin'||(role==='sales'&&u.buyer.agent===ME))){const cs=SALET(u.buyer)==='cash';if(instN(u.buyer)<10)h+=`<button class="x pri" id="apay">${cs?'إضافة تسديد':'إضافة قسط'}</button>`;const o=overdueOf(u);if(o>0)h+=`<div class="note">مبلغ متأخر عن موعد التسديد: <b>${fz(o)}</b></div>`}
  const hd=holdOf(u);
  if(hd){h+=`<div class="note">محجوزة مؤقتاً للزبون ${esc(hd.name)} (بواسطة ${esc(hd.by)}) — تنتهي بعد ${leftTxt(hd.until-Date.now())}.</div>`;if(role==='admin'||hd.by===ME)h+='<button class="x dan" id="rh">إلغاء الحجز المؤقت</button>'}
  else if(u.status==='avail'&&!pendingOf(u.id)&&!(role==='sales'&&partnerOf(u)))h+=`<div class="sec">حجز مؤقت</div>`+inp('h_name','اسم الزبون','')+`<label class="f">المدة<select id="h_h"><option value="24">24 ساعة</option><option value="48">48 ساعة</option><option value="72">72 ساعة</option></select></label><button class="x" id="mh">حجز مؤقت للوحدة</button>`;
@@ -2935,7 +2956,16 @@ function bindExtra(u){
   ['c_down','c_n','c_start'].forEach(i=>$(i).oninput=rc);rc();
   $('cp').onclick=()=>printOffer(u,getCalc(u));
   if($('cs'))$('cs').onclick=()=>{if(!(role==='admin'||(u.buyer&&u.buyer.agent===ME)))return;const c=getCalc(u);u.buyer.plan=c.plan;log.unshift({t:TS(),who:WH(),unit:u.id,txt:`اعتماد جدول دفعات (${c.plan.length} دفعة)`});show(u.id)}}
+ if($('apay'))$('apay').onclick=()=>addPayUI(u);
  if($('qu'))$('qu').onclick=()=>qrUI(u.id);if($('qpr'))$('qpr').onclick=()=>priceUI(u)}
+function addPayUI(u){
+ if(!(u.status==='sold'&&u.buyer&&(role==='admin'||(role==='sales'&&u.buyer.agent===ME)))||instN(u.buyer)>=10)return;
+ const cs=SALET(u.buyer)==='cash',n=instN(u.buyer)+1,lb=cs?'تسديد':'قسط';
+ open_(`<h2>${cs?'إضافة تسديد':'إضافة قسط'} — الوحدة ${u.id}</h2>`+R('الحاجز',esc(u.buyer.name))+inp('ap_a',`مبلغ ال${lb} (د.ع)`,'','number')+inp('ap_d',`تاريخ ال${lb}`,todayS(),'date')+`<div id="ap_e" class="note" style="display:none;color:var(--build)"></div><button class="x pri" id="ap_s">حفظ</button><button class="x" id="ap_b">رجوع</button>`);
+ $('ap_b').onclick=()=>show(u.id);
+ $('ap_s').onclick=()=>{const a=Math.round(+$('ap_a').value),d=$('ap_d').value,er=m=>{$('ap_e').textContent=m;$('ap_e').style.display='block'};if(!(a>0))return er('اكتب مبلغاً صحيحاً');if(!d)return er('حدد التاريخ');
+  const b=u.buyer,ds=pdates(b);b.pays=(b.pays||[]).concat([a]);b.pdates=ds.concat([d]);b.stype=SALET(b);
+  log.unshift({t:TS(),who:WH(),unit:u.id,txt:`إضافة ${lb} ${n}: ${fz(a)} بتاريخ ${d}`});paint();show(u.id)}}
 function printOffer(u,c){
  const n=x=>Number(x||0).toLocaleString('en-US'),lg=document.querySelector('.brand img').src,m=modelOf(u),now=new Date();
  const rows=c.plan.slice(0,40).map((p,i)=>`<tr><td>${i+1}</td><td>${p.k}</td><td>${p.due}</td><td>${n(p.amt)}</td></tr>`).join('');
@@ -3039,14 +3069,14 @@ const FB={aud:false,readonly:false,ok:false,staff:false,uid:'',user:null,profile
 const synced={};let syncT=null,pt=0,firstSnap=false,reqFirst=false,unsubs=[];
 const newRid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const pubSig=u=>JSON.stringify([u.status,u.price||0,u.area||0,u.done||0,!!u.pend]);
-const bSig=u=>{const b=u.buyer;return b?JSON.stringify([b.name,b.phone,b.idn,b.date,(b.pays||[]).map(Number),b.agent,(b.plan||[]).map(p=>p.due+'|'+p.amt+'|'+p.k),role==='admin'?(PMAP[u.id]||''):'']):'null'};
+const bSig=u=>{const b=u.buyer;return b?JSON.stringify([b.name,b.phone,b.idn,b.date,(b.pays||[]).map(Number),b.agent,SALET(b),b.due||'',pdates(b),(b.plan||[]).map(p=>p.due+'|'+p.amt+'|'+p.k),role==='admin'?(PMAP[u.id]||''):'']):'null'};
 const hSig=u=>u.hold?[u.hold.by,u.hold.name,u.hold.until].join('|'):'null';
-const rSig=r=>[r.unit,r.by,r.byUid,r.at.getTime(),r.status,r.note||'',r.seen?1:0,r.by2||'',r.decAt?r.decAt.getTime():0,r.buyer.name,r.buyer.phone,r.buyer.idn,r.buyer.date,(r.buyer.pays||[]).join(',')].join('#');
+const rSig=r=>[r.unit,r.by,r.byUid,r.at.getTime(),r.status,r.note||'',r.seen?1:0,r.by2||'',r.decAt?r.decAt.getTime():0,r.buyer.name,r.buyer.phone,r.buyer.idn,r.buyer.date,(r.buyer.pays||[]).join(','),r.buyer.stype||'',r.buyer.due||'',(r.buyer.pdates||[]).join(',')].join('#');
 const schedPaint=()=>{if(pt)return;pt=requestAnimationFrame(()=>{pt=0;paint()})};
-const normBuyer=d=>({name:d.name||'',phone:d.phone||'',idn:d.idn||'',date:d.date||'',pays:(d.pays||[]).map(Number),agent:d.agent||'',...(d.plan&&d.plan.length?{plan:d.plan.map(p=>({due:p.due,amt:+p.amt,k:p.k}))}:{})});
-const buyerDoc=(b,u)=>({name:b.name||'',phone:b.phone||'',idn:b.idn||'',date:b.date||'',pays:(b.pays||[]).map(Number),agent:b.agent||'',plan:(b.plan||[]).map(p=>({due:p.due,amt:+p.amt,k:p.k})),...(role==='admin'&&u?{partnerId:PMAP[u.id]||''}:{})});
-const reqDoc=r=>({unit:r.unit,by:r.by,byUid:r.byUid||'',at:r.at.getTime(),status:r.status,buyer:{name:r.buyer.name||'',phone:r.buyer.phone||'',idn:r.buyer.idn||'',date:r.buyer.date||'',pays:(r.buyer.pays||[]).map(Number)},note:r.note||'',seen:!!r.seen,by2:r.by2||'',decAt:r.decAt?r.decAt.getTime():0});
-const fromReq=(id,d)=>({rid:id,unit:d.unit,by:d.by,byUid:d.byUid,at:new Date(d.at),status:d.status,buyer:{...d.buyer,pays:(d.buyer.pays||[]).map(Number)},note:d.note||'',seen:!!d.seen,by2:d.by2||'',decAt:d.decAt?new Date(d.decAt):null});
+const normBuyer=d=>({name:d.name||'',phone:d.phone||'',idn:d.idn||'',date:d.date||'',pays:(d.pays||[]).map(Number),stype:d.stype==='cash'?'cash':'inst',pdates:(d.pays||[]).map((_,i)=>((d.pdates||[])[i])||''),due:d.due||'',agent:d.agent||'',...(d.plan&&d.plan.length?{plan:d.plan.map(p=>({due:p.due,amt:+p.amt,k:p.k}))}:{})});
+const buyerDoc=(b,u)=>({name:b.name||'',phone:b.phone||'',idn:b.idn||'',date:b.date||'',pays:(b.pays||[]).map(Number),stype:SALET(b),pdates:pdates(b),due:b.due||'',agent:b.agent||'',plan:(b.plan||[]).map(p=>({due:p.due,amt:+p.amt,k:p.k})),...(role==='admin'&&u?{partnerId:PMAP[u.id]||''}:{})});
+const reqDoc=r=>({unit:r.unit,by:r.by,byUid:r.byUid||'',at:r.at.getTime(),status:r.status,buyer:{name:r.buyer.name||'',phone:r.buyer.phone||'',idn:r.buyer.idn||'',date:r.buyer.date||'',pays:(r.buyer.pays||[]).map(Number),stype:r.buyer.stype==='cash'?'cash':'inst',pdates:pdates(r.buyer),due:r.buyer.due||''},note:r.note||'',seen:!!r.seen,by2:r.by2||'',decAt:r.decAt?r.decAt.getTime():0});
+const fromReq=(id,d)=>({rid:id,unit:d.unit,by:d.by,byUid:d.byUid,at:new Date(d.at),status:d.status,buyer:{...d.buyer,stype:d.buyer.stype==='cash'?'cash':'inst',due:d.buyer.due||'',pays:(d.buyer.pays||[]).map(Number),pdates:(d.buyer.pays||[]).map((_,i)=>(d.buyer.pdates||[])[i]||'')},note:d.note||'',seen:!!d.seen,by2:d.by2||'',decAt:d.decAt?new Date(d.decAt):null});
 function fbErr(e){console.error(e);const c=e&&e.code||'';toast(c==='permission-denied'?'لا تملك صلاحية هذه العملية، أو أن قواعد الأمان لم تُنشر بعد':c==='unavailable'?'تعذّر الاتصال بقاعدة البيانات':'خطأ: '+((e&&e.message)||e))}
 function authMsg(e){const c=e&&e.code||'';return c==='auth/invalid-credential'||c==='auth/wrong-password'||c==='auth/user-not-found'||c==='auth/invalid-email'?'اسم المستخدم أو كلمة المرور غير صحيحة':c==='auth/too-many-requests'?'محاولات كثيرة، حاول لاحقاً':c==='auth/email-already-in-use'?'اسم المستخدم مستخدم مسبقاً':c==='auth/weak-password'?'كلمة المرور ضعيفة (6 أحرف على الأقل)':c==='auth/network-request-failed'?'تعذّر الاتصال بالإنترنت':'تعذّرت العملية: '+(c||e.message)}
 const setCN=()=>{const e=$('cn');e.textContent=FB.ok?'● متصل بقاعدة البيانات':'● وضع تجريبي (بدون حفظ)';e.style.color=FB.ok?'#16a34a':'#d97706'};
@@ -3157,13 +3187,13 @@ function partnerTbl(n){if(!partners.length)return'';return `<h3>رابعاً: ح
 function ptnUI(){
  if(role!=='admin'){open_(`<h2>الشركاء</h2><div class="note">إدارة الشركاء متاحة للمدير فقط.</div><button class="x" id="cl">إغلاق</button>`);$('cl').onclick=close;return}
  const st=partnerStats(),free=Object.values(P).filter(u=>!PMAP[u.id]).length;
- open_(`<h2>${ic('handshake')} الشركاء وتوزيع الوحدات</h2>`+(partners.length?st.map(s=>`<div class="r" style="align-items:center"><span><i class="pd2" style="background:${s.p.color}"></i><b>${esc(s.p.name)}</b><br><small style="color:var(--mut)">${s.n} وحدة · مباعة ${s.sold} · معروضة ${s.av} · قيد الإنجاز ${s.bd}</small></span><span><button class="s" data-pe="${s.p.id}">الوحدات</button> <button class="s" data-pa="${s.p.id}">حساب الشريك</button> <button class="s dan" data-pdl="${s.p.id}">حذف</button></span></div>`).join('')+`<div class="note">وحدات بدون شريك: ${free}</div>`:'<div class="note">لا يوجد شركاء بعد.</div>')
+ open_(`<h2>${ic('handshake')} الشركاء وتوزيع الوحدات</h2>`+(partners.length?st.map(s=>`<div class="r" style="align-items:center"><span><i class="pd2" style="background:${s.p.color}"></i><b>${esc(s.p.name)}</b><br><small style="color:var(--mut)">${s.n} وحدة · مباعة ${s.sold} · معروضة ${s.av} · قيد الإنجاز ${s.bd}</small></span><span><button class="s" data-pe="${s.p.id}">الوحدات</button> ${FB.aud?`<button class="s" data-pa="${s.p.id}">حساب الشريك</button> `:''}<button class="s dan" data-pdl="${s.p.id}">حذف</button></span></div>`).join('')+`<div class="note">وحدات بدون شريك: ${free}</div>`:'<div class="note">لا يوجد شركاء بعد.</div>')
   +`<div class="sec">إضافة شريك</div>`+inp('pn_name','اسم الشريك','')+`<label class="f">اللون<select id="pn_col">${PAL.map((c,i)=>`<option value="${c}" ${i===partners.length%PAL.length?'selected':''}>${PALN[i]}</option>`).join('')}</select></label><div id="pe2" class="note" style="display:none;color:var(--build)"></div><button class="x pri" id="pn_add">إضافة شريك</button><div class="note">بعد إضافة الشريك اضغط "الوحدات" لتحديد وحداته: نطاق (من رقم إلى رقم) ووحدات منفردة.</div><button class="x" id="cl">إغلاق</button>`);
  $('cl').onclick=close;
  document.querySelectorAll('#card button[data-pe]').forEach(b=>b.onclick=()=>ptnEdit(b.dataset.pe));document.querySelectorAll('#card button[data-pa]').forEach(b=>b.onclick=()=>ptnAcct(b.dataset.pa));
  document.querySelectorAll('#card button[data-pdl]').forEach(b=>b.onclick=()=>{const p=partners.find(x=>x.id===b.dataset.pdl);if(!p||!confirm(`حذف الشريك ${p.name}؟ تصبح وحداته بدون شريك.`))return;
   partners.splice(partners.indexOf(p),1);rebuildPmap();if(FB.ok&&FB.staff)FB.M.deleteDoc(FB.M.doc(FB.db,'partners',p.id)).catch(fbErr);log.unshift({t:TS(),who:WH(),unit:'—',txt:'حذف الشريك '+p.name});paint();ptnUI()});
- $('pn_add').onclick=()=>{if(role!=='admin')return;const n=$('pn_name').value.trim(),er=m=>{$('pe2').textContent=m;$('pe2').style.display='block'};if(!n)return er('اكتب اسم الشريك');if(partners.some(p=>p.name===n))return er('هذا الاسم مستخدم مسبقاً');
+ $('pn_add').onclick=()=>{if(role!=='admin')return;const n=$('pn_name').value.trim(),er=m=>{$('pe2').textContent=m;$('pe2').style.display='block'};if(!n)return er('اكتب اسم الشريك');if(partners.some(p=>p.name===n))return er('هذا الاسم مستخدم مسبقاً');if(!FB.aud&&partners.length>=3)return er('لا يمكن إضافة المزيد من الشركاء');
   const p={id:newRid(),name:n,color:$('pn_col').value,items:[]};partners.push(p);persistPartner(p);log.unshift({t:TS(),who:WH(),unit:'—',txt:'إضافة شريك: '+n});paint();ptnEdit(p.id)}}
 function ptnEdit(pid){
  const p=partners.find(x=>x.id===pid);if(!p||role!=='admin')return;const n=setOf(p).size;
@@ -3254,9 +3284,10 @@ function backupXL(){
  try{
   const A=Object.values(P).sort((a,b)=>a.id-b.id),SL={build:'قيد الإنجاز',avail:'منجزة',sold:'مباعة'},now=new Date(),pad=x=>String(x).padStart(2,'0');
   const rng=p=>p.items.map(([a,b])=>a===b?a:a+'-'+b).join(', ');
-  const H=['رقم الوحدة','المساحة','السعر','نسبة الإنجاز','الحالة','اسم الحاجز','الهاتف','رقم الهوية','تاريخ الحجز',...OR.map(o=>'دفعة '+o),'المسؤول','الشريك','الزون'];
-  const rows=A.map(u=>{const b=u.buyer,p=partners.find(x=>x.id===PMAP[u.id]);return [u.id,u.area||'',u.price||'',u.done||0,SL[u.status],b?b.name:'',b?b.phone:'',b?b.idn:'',b?b.date:'',...OR.map((o,i)=>b&&b.pays&&+b.pays[i]?+b.pays[i]:''),b?b.agent:'',p?p.name:'',(zoneOf(u)||{name:''}).name]});
-  const sheets=[['الوحدات',[H,...rows],[12,10,16,12,14,24,15,16,14,...OR.map(()=>14),16,18,18]]];
+  const H=['رقم الوحدة','المساحة','السعر','نسبة الإنجاز','الحالة','اسم الحاجز','الهاتف','رقم الهوية','تاريخ الحجز',...OR.map(o=>'دفعة '+o),'المسؤول','الشريك','الزون','نوع البيع','موعد تسديد المتبقي'];
+  const rows=A.map(u=>{const b=u.buyer,p=partners.find(x=>x.id===PMAP[u.id]);return [u.id,u.area||'',u.price||'',u.done||0,SL[u.status],b?b.name:'',b?b.phone:'',b?b.idn:'',b?b.date:'',...OR.map((o,i)=>b&&b.pays&&+b.pays[i]?+b.pays[i]:''),b?b.agent:'',p?p.name:'',(zoneOf(u)||{name:''}).name,b?SLB[SALET(b)]:'',b&&b.due?b.due:'']});
+  const sheets=[['الوحدات',[H,...rows],[12,10,16,12,14,24,15,16,14,...OR.map(()=>14),16,18,18,14,18]]];
+  sheets.push(['التسديدات',[['رقم الوحدة','الحاجز','البيان','التاريخ','المبلغ'],...A.filter(u=>u.buyer).flatMap(u=>(u.buyer.pays||[]).map((x,i)=>+x?[u.id,u.buyer.name,i?'القسط '+i:'المقدمة',pdates(u.buyer)[i]||'',+x]:null).filter(Boolean))],[12,22,14,14,16]]);
   if(zones.length)sheets.push(['الزونات',[['الزون','عدد الوحدات','الوحدات','المباعة','المعروضة','قيد الإنجاز','متوسط الإنجاز %'],...zonesSorted().map(z=>{const us=A.filter(u=>ZMAP[u.id]===z.id),c=t=>us.filter(u=>u.status===t).length;return[z.name,us.length,rng(z),c('sold'),c('avail'),c('build'),us.length?Math.round(us.reduce((a,u)=>a+(u.done||0),0)/us.length):0]})],[20,12,40,10,10,12,14]]);
   const ps=partnerStats();
   if(ps.length)sheets.push(['الشركاء',[['الشريك','عدد الوحدات','الوحدات','المباعة','المعروضة','قيد الإنجاز','قيمة المبيعات','المستلم','المستحق'],...ps.map(s=>[s.p.name,s.n,rng(s.p),s.sold,s.av,s.bd,s.sv,s.rc,s.due])],[20,12,40,10,10,12,16,16,16]]);
@@ -3650,7 +3681,7 @@ function acctEdit(uid){const u=allU.find(x=>x.uid===uid);if(!u||!FB.aud)return;c
 const gate=$('gate');$('glogo').src=document.querySelector('.brand img').src;
 const gateShow=()=>{gate.classList.remove('off')},gateHide=()=>{gate.classList.add('off')};
 function gateState(ready){$('gchk').style.display=ready?'none':'flex';$('gfields').style.display=ready?'':'none'}
-function gateErr(m){$('gerr').textContent=m||''}
+function gateErr(m){$('gerr').style.color='';$('gerr').textContent=m||''}
 $('gsh').onclick=()=>{const p=$('gp');p.type=p.type==='password'?'text':'password'};
 $('gview').onclick=()=>{gateErr('');gateHide()};
 $('gform').onsubmit=async e=>{e.preventDefault();gateErr('');const un=normU($('gu').value),pw=$('gp').value;
@@ -3661,6 +3692,10 @@ $('gform').onsubmit=async e=>{e.preventDefault();gateErr('');const un=normU($('g
   for(const e1 of ems){for(const p1 of pws){try{await FB.M.signInWithEmailAndPassword(FB.auth,e1,p1);okk=true;break}catch(x){lastE=x;if(!bad_(x))throw x}}if(okk)break}
   if(!okk)throw lastE}catch(x){FB.explicit=false;gateErr(authMsg(x)+(x&&x.code?' ['+x.code+']':''))}
  b.disabled=false;b.textContent='تسجيل الدخول'};
+$('gforgot').onclick=async()=>{gateErr('');const un=normU($('gu').value);if(!un)return gateErr('اكتب اسم المستخدم أو البريد الإلكتروني أولاً ثم اضغط «نسيت كلمة المرور»');if(!FB.ok)return gateErr('الاتصال بقاعدة البيانات غير جاهز بعد');
+ let em=un.includes('@')?un:'';if(!em){try{const s=await FB.M.getDoc(FB.M.doc(FB.db,'authmap',un));if(s.exists())em=s.data().email||''}catch(x){}}
+ if(!em||/@users\.esraa-units\.app$/i.test(em))return gateErr('استعادة كلمة المرور عبر البريد متاحة لحساب مراقب النظام فقط. لبقية الحسابات يعيد المدير تعيين كلمة المرور.');
+ try{await FB.M.sendPasswordResetEmail(FB.auth,em);gateErr('');$('gerr').textContent='أُرسل رابط الاستعادة إلى البريد المسجّل لحساب المراقب (تفقد الرسائل غير المرغوبة أيضاً).';$('gerr').style.color='#86efac'}catch(x){$('gerr').style.color='';gateErr(x&&x.code==='auth/user-not-found'?'هذا البريد غير مسجّل':authMsg(x))}};
 gateShow();gateState(false);
 setTimeout(()=>{if($('gchk').style.display!=='none'&&!FB.ok){gateHide()}},12000);
 
