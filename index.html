@@ -3070,8 +3070,8 @@ function startPublic(){const M=FB.M,db=FB.db;
  M.onSnapshot(M.doc(db,'meta','init'),s=>{FB.inited=s.exists();updSeed()},()=>{})}
 async function onAuth(user){
  if(!user){gateState(true);gateShow();FB.uid='';FB.staff=false;FB.user=null;FB.profile=null;FB.aud=false;FB.readonly=false;stopStaff();if(role!=='view'){$('role').value='view';updRole()}updSeed();return}
- try{const s=await FB.M.getDoc(FB.M.doc(FB.db,'users',user.uid)),p=s.exists()?s.data():null;
-  const bad=!p?`لا يوجد مستند لهذا الحساب في مجموعة users. يجب أن يكون Document ID مطابقاً لمعرّف المستخدم: ${user.uid}`:p.active===false||String(p.active)==='false'?'هذا الحساب معطّل (الحقل active = false)':!['admin','sales','partner','auditor'].includes(p.role)?`الحقل role غير صحيح، والمسجّل: «${p.role}» (القيم المسموحة: admin, sales, partner, auditor)`:(p.role==='partner'&&!p.partnerId)?'حساب الشريك غير مرتبط بشريك (partnerId)':'';
+ try{const s=await (FB.M.getDocFromServer||FB.M.getDoc)(FB.M.doc(FB.db,'users',user.uid)),p=s.exists()?s.data():null;
+  const bad=!p?`لا يوجد مستند لهذا الحساب. المشروع الذي يقرأ منه النظام: ${(typeof FBCFG!=='undefined'&&FBCFG.projectId)||'؟'} — المسار المطلوب: users / ${user.uid} — البريد: ${user.email||''}`:p.active===false||String(p.active)==='false'?'هذا الحساب معطّل (الحقل active = false)':!['admin','sales','partner','auditor'].includes(p.role)?`الحقل role غير صحيح، والمسجّل: «${p.role}» (القيم المسموحة: admin, sales, partner, auditor)`:(p.role==='partner'&&!p.partnerId)?'حساب الشريك غير مرتبط بشريك (partnerId)':'';
   if(bad){await FB.M.signOut(FB.auth);toast(bad);gateErr(bad);return}
   const ur=p.role==='auditor'?'admin':p.role;FB.aud=p.role==='auditor';FB.readonly=p.role==='admin'&&p.readonly===true;FB.uid=user.uid;FB.user=user;FB.profile=p;FB.staff=ur!=='partner';staff.length=0;if(ur==='sales')staff.push({name:p.name,email:p.email,uid:user.uid});
   close();gateHide();gateErr('');$('gp').value='';enter(ur,ur==='sales'?p.name:'',!FB.explicit);FB.explicit=false;(ur==='partner'?startPartner(p):startStaff({...p,role:ur}));if(FB.readonly)toast('حسابك بوضع القراءة فقط');queueSync()
@@ -3656,8 +3656,10 @@ $('gview').onclick=()=>{gateErr('');gateHide()};
 $('gform').onsubmit=async e=>{e.preventDefault();gateErr('');const un=normU($('gu').value),pw=$('gp').value;
  if(!FB.ok)return gateErr('الاتصال بقاعدة البيانات غير جاهز بعد، حاول بعد لحظات');if(!un||!pw)return gateErr('اكتب اسم المستخدم وكلمة المرور');
  const b=$('gbtn');b.disabled=true;b.textContent='جارٍ التحقق...';FB.explicit=true;
- try{let em=un.includes('@')?un:uEmail(un);try{const s=await FB.M.getDoc(FB.M.doc(FB.db,'authmap',un));if(s.exists())em=s.data().email}catch(x){}
-  await FB.M.signInWithEmailAndPassword(FB.auth,em,pw)}catch(x){FB.explicit=false;gateErr(authMsg(x)+(x&&x.code?' ['+x.code+']':''))}
+ try{const std=un.includes('@')?un:uEmail(un);let em=std;try{const s=await FB.M.getDoc(FB.M.doc(FB.db,'authmap',un));if(s.exists())em=s.data().email}catch(x){}
+  const bad_=x=>x&&(x.code==='auth/invalid-credential'||x.code==='auth/user-not-found'||x.code==='auth/wrong-password'),pws=[...new Set([pw,dg(pw),pw.trim(),dg(pw).trim()])],ems=[...new Set([em,std])];let lastE=null,okk=false;
+  for(const e1 of ems){for(const p1 of pws){try{await FB.M.signInWithEmailAndPassword(FB.auth,e1,p1);okk=true;break}catch(x){lastE=x;if(!bad_(x))throw x}}if(okk)break}
+  if(!okk)throw lastE}catch(x){FB.explicit=false;gateErr(authMsg(x)+(x&&x.code?' ['+x.code+']':''))}
  b.disabled=false;b.textContent='تسجيل الدخول'};
 gateShow();gateState(false);
 setTimeout(()=>{if($('gchk').style.display!=='none'&&!FB.ok){gateHide()}},12000);
